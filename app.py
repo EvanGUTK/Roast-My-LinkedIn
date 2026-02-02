@@ -2,7 +2,6 @@
 Roast-My-LinkedIn — Upload a LinkedIn/resume screenshot, get a Roast + Toast from Gemini.
 """
 import os
-from io import BytesIO
 
 import streamlit as st
 import google.generativeai as genai
@@ -72,7 +71,7 @@ if uploaded is None:
 
 # Show image
 img = Image.open(uploaded).convert("RGB")
-st.image(img, use_container_width=True, caption="Your upload")
+st.image(img, width="stretch", caption="Your upload")
 
 if st.button("Get Roast & Toast", type="primary"):
     with st.spinner("Roasting…"):
@@ -85,3 +84,10 @@ if st.button("Get Roast & Toast", type="primary"):
 
     st.subheader("🍞 Toast")
     st.markdown(toast)
+
+# Footer
+st.divider()
+st.markdown(
+    "[LinkedIn](https://www.linkedin.com/in/evan-goodman-089762244/) · "
+    "[GitHub](https://github.com/EvanGUTK) · **v1.0** · Coded by **Evan Goodman**"
+)
