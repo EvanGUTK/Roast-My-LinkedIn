@@ -94,7 +94,7 @@ Roast-My-LinkedIn/
    ```
 
 4. **Configure API keys**
-   - **Local:** Copy `.env.example` to `.env` and add your `GEMINI_API_KEY`.
+   - **Local:** Copy `.env.example` to `.env` and add your `GEMINI_API_KEY`. **Do not commit `.env`** — it is in `.gitignore` so your key stays off GitHub.
    - **Streamlit Cloud:** In your app → **Settings** → **Secrets**, add `GEMINI_API_KEY` (e.g. `GEMINI_API_KEY = "your-key-here"`). The app reads from secrets when deployed.
 
 5. **Run the app**
