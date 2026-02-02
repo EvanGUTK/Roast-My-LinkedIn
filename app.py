@@ -1,12 +1,11 @@
 """
 Roast-My-LinkedIn — Upload a LinkedIn/resume screenshot, get a Roast + Toast from Gemini.
 """
-import os
-
 import streamlit as st
-import google.generativeai as genai
 from dotenv import load_dotenv
 from PIL import Image
+
+from lib import get_gemini_api_key, get_model
 
 load_dotenv()
 
@@ -18,17 +17,22 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# Configure Gemini
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    st.error("Missing **GEMINI_API_KEY**. Add it to `.env` or your environment.")
+# Session state for roast/toast (chat lives on RMLT page)
+if "roast" not in st.session_state:
+    st.session_state.roast = None
+if "toast" not in st.session_state:
+    st.session_state.toast = None
+if "chat_messages" not in st.session_state:
+    st.session_state.chat_messages = []
+
+# Configure Gemini (works with Streamlit Cloud secrets or .env locally)
+if not get_gemini_api_key():
+    st.error(
+        "Missing **GEMINI_API_KEY**. Add it to `.env` locally or to **Streamlit Cloud → App → Settings → Secrets** when deployed."
+    )
     st.stop()
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-# Model with vision; gemini-2.5-flash-lite has free-tier quota (15 RPM, 1000 RPD)
-MODEL_NAME = "gemini-2.5-flash-lite"
-model = genai.GenerativeModel(MODEL_NAME)
+model = get_model()
 
 # Prompts
 ROAST_PROMPT = """You are a brutally honest, funny senior engineer reviewing this LinkedIn profile or resume screenshot.
@@ -67,27 +71,30 @@ uploaded = st.file_uploader(
 
 if uploaded is None:
     st.info("👆 Upload an image to get started.")
-    st.stop()
+else:
+    img = Image.open(uploaded).convert("RGB")
+    st.image(img, width="stretch", caption="Your upload")
 
-# Show image
-img = Image.open(uploaded).convert("RGB")
-st.image(img, width="stretch", caption="Your upload")
+    if st.button("Get Roast & Toast", type="primary"):
+        with st.spinner("Roasting…"):
+            roast = run_vision(ROAST_PROMPT, img)
+        with st.spinner("Toasting…"):
+            toast = run_vision(TOAST_PROMPT, img)
+        st.session_state.roast = roast
+        st.session_state.toast = toast
+        st.session_state.chat_messages = []
+        st.rerun()
 
-if st.button("Get Roast & Toast", type="primary"):
-    with st.spinner("Roasting…"):
-        roast = run_vision(ROAST_PROMPT, img)
-    with st.spinner("Toasting…"):
-        toast = run_vision(TOAST_PROMPT, img)
-
-    st.subheader("😈 Roast")
-    st.markdown(roast)
-
-    st.subheader("🍞 Toast")
-    st.markdown(toast)
+    if st.session_state.roast and st.session_state.toast:
+        st.subheader("😈 Roast")
+        st.markdown(st.session_state.roast)
+        st.subheader("🍞 Toast")
+        st.markdown(st.session_state.toast)
+        st.page_link("pages/1_RMLT.py", label="💬 Chat with RMLT", icon="✨")
 
 # Footer
 st.divider()
 st.markdown(
     "[LinkedIn](https://www.linkedin.com/in/evan-goodman-089762244/) · "
-    "[GitHub](https://github.com/EvanGUTK) · **v1.0** · Coded by **Evan Goodman**"
+    "[GitHub](https://github.com/EvanGUTK) · **v1.1** · Coded by **Evan Goodman**"
 )
